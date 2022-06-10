@@ -18,16 +18,15 @@ def get_data(way, isheader=True, sep=','):
 	dataframe = None
 	sep = sep if sep else ','
 	st.write(f"读取数据如下. sep:`{sep}` isheader:`{isheader}`, way:`{way}`")
-	match way:
-		case "直接粘贴":
-			uploaded_file = st.text_area('请输入多行经纬度列表')
-			if uploaded_file:
-				dataframe = pd.read_csv(StringIO(uploaded_file), header="infer" if isheader else None, sep=sep)
+	if way == "直接粘贴":
+		uploaded_file = st.text_area('请输入多行经纬度列表')
+		if uploaded_file:
+			dataframe = pd.read_csv(StringIO(uploaded_file), header="infer" if isheader else None, sep=sep)
 
-		case "文件上传":
-			uploaded_file = st.file_uploader("选择文件并上传")
-			if uploaded_file:
-				dataframe = pd.read_csv(uploaded_file, header="infer" if isheader else None, sep=sep)
+	elif way == "文件上传":
+		uploaded_file = st.file_uploader("选择文件并上传")
+		if uploaded_file:
+			dataframe = pd.read_csv(uploaded_file, header="infer" if isheader else None, sep=sep)
 
 	with st.expander("上传结果如下."):
 		st.write(dataframe)
@@ -85,51 +84,49 @@ def transform(datas, data_type, wkt_type):
 
 	geometry = None
 	# 1. 先分割解析各种数据
-	match data_type:
-		case "Point":
-			points = []
-			# 如果有n列，判断每一列是不是 list，如果是，那么每一列都转换为 点
-			# 如果有两列，判断每一列 都不是list ，那么两列加起来是点
-			if len(datas.keys()) == 2 and not isinstance(list(datas.values())[0][0], list):
-				for i in zip(*(datas.values())):
-					points.append(Point(*i))
-			elif isinstance(list(datas.values())[0][0], list):
-				for i in datas.values():
-					points.append(Point(*i))
-			geometry = MultiPoint(points)
+	if data_type == "Point":
+		points = []
+		# 如果有n列，判断每一列是不是 list，如果是，那么每一列都转换为 点
+		# 如果有两列，判断每一列 都不是list ，那么两列加起来是点
+		if len(datas.keys()) == 2 and not isinstance(list(datas.values())[0][0], list):
+			for i in zip(*(datas.values())):
+				points.append(Point(*i))
+		elif isinstance(list(datas.values())[0][0], list):
+			for i in datas.values():
+				points.append(Point(*i))
+		geometry = MultiPoint(points)
 
-		case "LineString":
-			# 每一列都是list，转换为 线
-			...
-		case "Polygon":
-			# 每一列都是 list ，转换为面
-			...
-		case "MultiPoint":
-			# 每一列都是 转换为一个  MultiPoint
-			...
-		case "MultiLineString":
-			# 每一列都是 list 转换为一个  MultiLineString
-			...
-		case "MultiPolygon":
-			# 每一列都是 list 转换为一个  MultiPolygon
-			...
+	elif data_type == "LineString":
+		# 每一列都是list，转换为 线
+		...
+	elif data_type == "Polygon":
+		# 每一列都是 list ，转换为面
+		...
+	elif data_type == "MultiPoint":
+		# 每一列都是 转换为一个  MultiPoint
+		...
+	elif data_type == "MultiLineString":
+		# 每一列都是 list 转换为一个  MultiLineString
+		...
+	elif data_type == "MultiPolygon":
+		# 每一列都是 list 转换为一个  MultiPolygon
+		...
 	if not geometry:
 		return geometry
 
 	result = None
 	filename = 'data'
-	match wkt_type:
-		case "KML":
-			result = geometry.wkt
-			filename += '.kml'
-		case "WKT":
-			result = geometry.wkt
-			filename += '.wkt'
-		case "GEOJSON":
-			result = geojson.dumps(shapely.geometry.mapping(geometry))
-			filename += '.json'
-		case _:
-			filename += '.text'
+	if wkt_type == "KML":
+		result = geometry.wkt
+		filename += '.kml'
+	elif wkt_type == "WKT":
+		result = geometry.wkt
+		filename += '.wkt'
+	elif wkt_type == "GEOJSON":
+		result = geojson.dumps(shapely.geometry.mapping(geometry))
+		filename += '.json'
+	else:
+		filename += '.text'
 	st.code(result)
 	return result, filename
 
