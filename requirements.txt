@@ -3,7 +3,6 @@ pandas~=1.4.2
 shapely~=1.8.2
 streamlit~=1.10.0
 requests~=2.27.1
-PIL
 streamlit_lottie
 sklearn~=0.0
 numpy~=1.22.4
