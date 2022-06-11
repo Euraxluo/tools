@@ -3,8 +3,10 @@ import pandas as pd
 import shapely
 import streamlit as st
 from io import StringIO
-from shapely import wkt
+from osgeo import ogr
 from shapely.geometry import shape, Point, Polygon, MultiPolygon, LineString, MultiLineString, MultiPoint
+from geojson import FeatureCollection
+from utils.coordinates import transform_to_shapely
 
 
 def get_data(way, isheader=True, sep=','):
@@ -82,42 +84,14 @@ def transform(datas, data_type, wkt_type):
 	if not datas:
 		return None
 
-	geometry = None
-	# 1. 先分割解析各种数据
-	if data_type == "Point":
-		points = []
-		# 如果有n列，判断每一列是不是 list，如果是，那么每一列都转换为 点
-		# 如果有两列，判断每一列 都不是list ，那么两列加起来是点
-		if len(datas.keys()) == 2 and not isinstance(list(datas.values())[0][0], list):
-			for i in zip(*(datas.values())):
-				points.append(Point(*i))
-		elif isinstance(list(datas.values())[0][0], list):
-			for i in datas.values():
-				points.append(Point(*i))
-		geometry = MultiPoint(points)
-
-	elif data_type == "LineString":
-		# 每一列都是list，转换为 线
-		...
-	elif data_type == "Polygon":
-		# 每一列都是 list ，转换为面
-		...
-	elif data_type == "MultiPoint":
-		# 每一列都是 转换为一个  MultiPoint
-		...
-	elif data_type == "MultiLineString":
-		# 每一列都是 list 转换为一个  MultiLineString
-		...
-	elif data_type == "MultiPolygon":
-		# 每一列都是 list 转换为一个  MultiPolygon
-		...
+	geometry = transform_to_shapely(datas, data_type)
 	if not geometry:
 		return geometry
 
 	result = None
 	filename = 'data'
 	if wkt_type == "KML":
-		result = geometry.wkt
+		result = ogr.CreateGeometryFromWkt(geometry.wkt).ExportToKML()
 		filename += '.kml'
 	elif wkt_type == "WKT":
 		result = geometry.wkt
