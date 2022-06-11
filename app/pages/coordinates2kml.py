@@ -3,10 +3,10 @@ import pandas as pd
 import shapely
 import streamlit as st
 from io import StringIO
-from osgeo import ogr
 from shapely.geometry import shape, Point, Polygon, MultiPolygon, LineString, MultiLineString, MultiPoint
 from geojson import FeatureCollection
 from utils.coordinates import transform_to_shapely
+from utils.geo_to_kml import to_kml
 
 
 def get_data(way, isheader=True, sep=','):
@@ -91,7 +91,7 @@ def transform(datas, data_type, wkt_type):
 	result = None
 	filename = 'data'
 	if wkt_type == "KML":
-		result = ogr.CreateGeometryFromWkt(geometry.wkt).ExportToKML()
+		result = to_kml(geojson.loads(geojson.dumps(shapely.geometry.mapping(geometry))))
 		filename += '.kml'
 	elif wkt_type == "WKT":
 		result = geometry.wkt
