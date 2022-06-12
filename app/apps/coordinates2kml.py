@@ -101,7 +101,9 @@ def transform(datas, data_type, wkt_type):
 		filename += '.json'
 	else:
 		filename += '.text'
-	st.code(result)
+		
+	with st.expander("转换结果如下."):
+		st.code(result)
 	return result, filename
 
 
