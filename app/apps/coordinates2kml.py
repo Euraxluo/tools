@@ -24,11 +24,15 @@ def get_data(way, isheader=True, sep=','):
 		uploaded_file = st.text_area('请输入多行经纬度列表')
 		if uploaded_file:
 			dataframe = pd.read_csv(StringIO(uploaded_file), header="infer" if isheader else None, sep=sep)
+		else:
+			st.stop()
 
 	elif way == "文件上传":
 		uploaded_file = st.file_uploader("选择文件并上传")
 		if uploaded_file:
 			dataframe = pd.read_csv(uploaded_file, header="infer" if isheader else None, sep=sep)
+		else:
+			st.stop()
 
 	with st.expander("上传结果如下."):
 		st.write(dataframe)
