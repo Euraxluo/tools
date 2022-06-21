@@ -58,7 +58,7 @@ def gridoptions_builder_from_dataframe(gb: GridOptionsBuilder, dataframe, **defa
 		gb.configure_grid_options(suppressFieldDotNotation=True)
 	
 	for col_name, col_type in zip(dataframe.columns, dataframe.dtypes):
-		gb.configure_column(field=col_name, type=type_mapper.get(col_type.kind, []))
+		gb.configure_column(field=col_name,header_name=col_name, type=type_mapper.get(col_type.kind, []))
 	
 	return gb
 

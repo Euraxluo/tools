@@ -3,8 +3,8 @@ import pandas as pd
 import shapely
 import streamlit as st
 from io import StringIO
-from shapely.geometry import shape, Point, Polygon, MultiPolygon, LineString, MultiLineString, MultiPoint
-from geojson import FeatureCollection
+from shapely.geometry import shape
+from streamlit_ace import st_ace
 from utils.coordinates import transform_to_shapely
 from utils.geo_to_kml import to_kml
 
@@ -21,7 +21,7 @@ def get_data(way, isheader=True, sep=','):
 	sep = sep if sep else ','
 	st.write(f"读取数据如下. sep:`{sep}` isheader:`{isheader}`, way:`{way}`")
 	if way == "直接粘贴":
-		uploaded_file = st.text_area('请输入多行经纬度列表')
+		uploaded_file = st_ace('请输入多行经纬度列表', theme="github", language="python", height=100)
 		if uploaded_file:
 			dataframe = pd.read_csv(StringIO(uploaded_file), header="infer" if isheader else None, sep=sep)
 		else:
@@ -40,7 +40,7 @@ def get_data(way, isheader=True, sep=','):
 	return dataframe
 
 
-def choose_columns(dataframe):
+def choose_columns(dataframe,prompt="选择列"):
 	"""
 	选择列
 	:param dataframe:
@@ -48,10 +48,10 @@ def choose_columns(dataframe):
 	"""
 	if dataframe is not None:
 		way = st.sidebar.multiselect(
-			'选择列',
+			prompt,
 			dataframe.columns.tolist()
 		)
-		st.write(f"选的的列: {way}")
+		st.write(f"{prompt}结果: {way}")
 		return way
 	return []
 
