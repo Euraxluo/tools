@@ -1,7 +1,7 @@
 import streamlit as st
 
 # 导入多app 框架
-from utils.multi_app import MultiApp
+from utils.multi_app import *
 
 # 导入app列表
 from apps.map import (
@@ -25,7 +25,7 @@ from apps.map import (
 )
 
 st.set_page_config(layout="wide")
-application = MultiApp()
+application = multi_app()
 
 # add applications
 application.add_app("Home", home.app)
