@@ -17,3 +17,4 @@ geopandas
 streamlit_bokeh_events
 geemap
 leafmap
+rocksdict
