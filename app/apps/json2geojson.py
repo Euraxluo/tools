@@ -19,8 +19,13 @@ def get_data(way):
 	"""
 	if way == "直接粘贴":
 		uploaded_file = st_ace('请输入json数据', theme="github", language="python", height=100)
-		if uploaded_file:
-			dataframe = pd.read_json(StringIO(uploaded_file))
+		if uploaded_file and uploaded_file != "请输入json数据":
+			dataframe = None
+			try:
+				dataframe = pd.read_json(StringIO(uploaded_file))
+			except ValueError as e:
+				st.write(e)
+				st.stop()
 		else:
 			st.stop()
 	
@@ -84,8 +89,16 @@ def transform(datas, properties, data_type, wkt_type):
 	"""
 	if not datas:
 		return None
+	geometrys = []
+	for v in zip(*datas.values()):
+		geometry = transform_to_shapely(dict(zip(datas.keys(), [v])), data_type)
+		geometrys.append(geometry)
+	features = []
+	for idx, ps in enumerate(zip(*properties.values())):
+		feature = geojson.Feature(geometry=geometrys[idx], properties=dict(zip(properties.keys(), ps)))
+		features.append(feature)
 	
-	geometry = transform_to_shapely(datas, data_type)
+	geometry = geojson.FeatureCollection(features=features, **{"name": "fence", "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}})
 	if not geometry:
 		return geometry
 	
@@ -94,9 +107,6 @@ def transform(datas, properties, data_type, wkt_type):
 	if wkt_type == "KML":
 		result = to_kml(geojson.loads(geojson.dumps(shapely.geometry.mapping(geometry))))
 		filename += '.kml'
-	elif wkt_type == "WKT":
-		result = geometry.wkt
-		filename += '.wkt'
 	elif wkt_type == "GEOJSON":
 		result = geojson.dumps(shapely.geometry.mapping(geometry))
 		filename += '.json'
@@ -131,7 +141,7 @@ def app():
 	)
 	wkt_type = st.sidebar.selectbox(
 		'请选择转换格式',
-		("KML", "WKT", "GEOJSON")
+		("KML", "GEOJSON")
 	)
 	# 将上面解析的到的数据，每一种数据都
 	clicked = st.sidebar.button(f"点击转换生成{wkt_type}")
