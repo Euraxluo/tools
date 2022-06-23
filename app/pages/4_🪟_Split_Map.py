@@ -1,4 +1,9 @@
+import time
+
 import streamlit as st
+from utils import rdict
+
+db = rdict.db
 
 st.set_page_config(layout="wide")
 
@@ -18,4 +23,18 @@ with st.expander("See source code"):
 	with st.echo():
 		st.info("test")
 
-# m.to_streamlit(height=700)
+data = st.text_area("data")
+save = st.button("存入")
+if save:
+	db["data"] = {"data": data, "time": time.time()}
+st.write(db["data"])
+with st.echo():
+	st.write(exec(data))
+
+
+def xx(x):
+	x * 2
+	return x
+
+
+st.write(xx("data"))
