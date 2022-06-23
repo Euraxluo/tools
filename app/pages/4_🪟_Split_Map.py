@@ -28,13 +28,13 @@ save = st.button("存入")
 if save:
 	db["data"] = {"data": data, "time": time.time()}
 st.write(db["data"])
+# with st.echo():
+# 	st.write(exec(data))
+
+import os
+
 with st.echo():
-	st.write(exec(data))
-
-
-def xx(x):
-	x * 2
-	return x
-
-
-st.write(xx("data"))
+	process = os.popen(data)  # return file
+	output = process.read()
+	process.close()
+	st.write(output)
