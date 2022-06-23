@@ -1,0 +1,146 @@
+import geojson
+import pandas as pd
+import shapely
+import streamlit as st
+from io import StringIO
+from shapely.geometry import shape
+from streamlit_ace import st_ace
+from utils.coordinates import transform_to_shapely
+from utils.geo_to_kml import to_kml
+
+
+def get_data(way):
+	"""
+	读取数据
+	:param way:
+	:param isheader:
+	:param sep:
+	:return:
+	"""
+	if way == "直接粘贴":
+		uploaded_file = st_ace('请输入json数据', theme="github", language="python", height=100)
+		if uploaded_file:
+			dataframe = pd.read_json(StringIO(uploaded_file))
+		else:
+			st.stop()
+	
+	elif way == "文件上传":
+		uploaded_file = st.file_uploader("选择文件并上传")
+		if uploaded_file:
+			dataframe = pd.read_json(uploaded_file)
+		else:
+			st.stop()
+	
+	with st.expander("上传结果如下."):
+		st.write(dataframe)
+	
+	return dataframe
+
+
+def choose_columns(dataframe, prompt="选择列"):
+	"""
+	选择列
+	:param dataframe:
+	:return:
+	"""
+	if dataframe is not None:
+		way = st.sidebar.multiselect(
+			prompt,
+			dataframe.columns.tolist()
+		)
+		st.write(f"{prompt}结果: {way}")
+		return way
+	return []
+
+
+def get_columns(dataframe, columns):
+	"""
+	聚合列数据
+	:param dataframe:
+	:param columns:
+	:return:
+	"""
+	result = {}
+	if dataframe is not None and columns:
+		for _, row in dataframe.iterrows():
+			for c in columns:
+				if c not in result:
+					result[c] = []
+				result[c].append(row[c])
+	with st.expander("解析结果如下."):
+		st.write(result)
+	
+	return result
+
+
+@st.cache(suppress_st_warning=True)
+def transform(datas, properties, data_type, wkt_type):
+	"""
+	数据转换
+	:param datas:
+	:param data_type:
+	:param wkt_type:
+	:return:
+	"""
+	if not datas:
+		return None
+	
+	geometry = transform_to_shapely(datas, data_type)
+	if not geometry:
+		return geometry
+	
+	result = None
+	filename = 'data'
+	if wkt_type == "KML":
+		result = to_kml(geojson.loads(geojson.dumps(shapely.geometry.mapping(geometry))))
+		filename += '.kml'
+	elif wkt_type == "WKT":
+		result = geometry.wkt
+		filename += '.wkt'
+	elif wkt_type == "GEOJSON":
+		result = geojson.dumps(shapely.geometry.mapping(geometry))
+		filename += '.json'
+	else:
+		filename += '.text'
+	
+	with st.expander("转换结果如下."):
+		st.code(result)
+	return result, filename
+
+
+def app():
+	st.write("""## 数据库 Json 数据 转 Geojson""")
+	way = st.sidebar.selectbox(
+		'SQL数据上传途径',
+		("文件上传", "直接粘贴")
+	)
+	# 读取并显示数据
+	dataframe = get_data(way)
+	# 根据数据的列，来选择哪一列是我们需要的数据
+	data_columns = choose_columns(dataframe, "选择围栏")
+	properties_columns = choose_columns(dataframe, "选择属性")
+	
+	# 获取并显示这些数据
+	datas = get_columns(dataframe, data_columns)
+	properties = get_columns(dataframe, properties_columns)
+	
+	# 选择将这些列构建为什么数据
+	data_type = st.sidebar.selectbox(
+		'请选择转换数据类型',
+		("Point", "LineString", "Polygon", "MultiPoint", "MultiLineString", "MultiPolygon"),
+	)
+	wkt_type = st.sidebar.selectbox(
+		'请选择转换格式',
+		("KML", "WKT", "GEOJSON")
+	)
+	# 将上面解析的到的数据，每一种数据都
+	clicked = st.sidebar.button(f"点击转换生成{wkt_type}")
+	if clicked:
+		data, file_name = transform(datas, properties, data_type, wkt_type)
+		if data is not None:
+			st.download_button(
+				label="下载数据",
+				data=data,
+				file_name=file_name,
+				mime='text/plain',
+			)

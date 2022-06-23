@@ -4,13 +4,15 @@ import streamlit as st
 from utils.multi_app import *
 
 # 导入app列表
-from apps import coordinates2kml, csv
+from apps import table2kml, csv, json2kml, json2geojson
 
 st.set_page_config(layout="wide")
 application = multi_app()
 
 # add applications
-application.add_app('coordinates2kml', coordinates2kml.app)
+application.add_app('coordinates2kml', table2kml.app)
+application.add_app('json2kml', json2kml.app)
+application.add_app('json2geojson', json2geojson.app)
 application.add_app('csv', csv.app)
 # run applications
 application.run()
